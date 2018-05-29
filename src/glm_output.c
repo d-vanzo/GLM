@@ -161,7 +161,7 @@ static AED_REAL max_dtdz_at(LakeDataType *Lake, int count)
     AED_REAL dtdz, max_dtdz;
 
     if (count < 2)
-        return Lake[0].Height / 2;
+        return Lake[0].MeanHeight; //Lake[0].Height / 2;
 
     max_at = 1;
     max_dtdz = (Lake[1].Temp - Lake[0].Temp) / (Lake[1].Height - Lake[0].Height);
@@ -172,7 +172,8 @@ static AED_REAL max_dtdz_at(LakeDataType *Lake, int count)
             max_at = i;
         }
     }
-    return (Lake[max_at].Height - Lake[max_at - 1].Height) / 2;
+    //printf(" height values %f %f \n ",Lake[max_at].Height,Lake[max_at - 1].Height);
+    return Lake[max_at].MeanHeight; //(Lake[max_at].Height - Lake[max_at - 1].Height) / 2.0;
 }
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
@@ -309,7 +310,7 @@ void write_diags(int jday, AED_REAL LakeNum)
     write_csv_lake("T",               T,                         NULL, FALSE);
 
     write_csv_lake("LakeNumber",      LakeNum,                   NULL, FALSE);
-    write_csv_lake("Max dT/dz",    max_dtdz_at(Lake, NumLayers), NULL, FALSE);
+    write_csv_lake("Pos Max dT/dz",max_dtdz_at(Lake, NumLayers), NULL, FALSE);
     write_csv_lake("coef_wind_drag", coef_wind_drag,             NULL, TRUE);
 }
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/

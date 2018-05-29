@@ -31,7 +31,7 @@
 #define _GLM_H_
 
 #ifndef DEBUG
-#define DEBUG         0
+# define DEBUG        1
 #endif
 #define USE_FILLVALUE 1
 

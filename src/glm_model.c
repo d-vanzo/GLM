@@ -371,8 +371,10 @@ void do_model(int jstart, int nsave)
             flush_all_plots();
         else
 #endif
-        printf("step %d: Running day %8d, %4.2f%% of days complete\n", stepnum, jday, ntot*100./nDays);
 
+//#if DEBUG
+        printf("step %d: Running day %8d, %4.2f%% of days complete\n", stepnum, jday, ntot*100./nDays);
+//#endif
         write_diags(jday, calculate_lake_number());
     }   //# do while (ntot < ndays)
     /*----------########### End of main daily loop ################-----------*/

@@ -308,10 +308,13 @@ void do_model(int jstart, int nsave)
 
         read_daily_outflow(jday, NumOut, DrawNew);
         //# To get daily inflow (i.e. m3/day) times by SecsPerDay
-        for (i = 0; i < NumOut; i++)
+        for (i = 0; i < NumOut; i++){
+            DrawNew[i] = check_if_nan(DrawNew[i],DrawOld[i]);
             Outflows[i].Draw = (DrawOld[i] + DrawNew[i]) / 2.0 * SecsPerDay;
+        }
 
         read_daily_withdraw_temp(jday, &WithdrTempNew);
+        WithdrTempNew = check_if_nan(WithdrTempNew,WithdrTempOld);
         WithdrawalTemp = (WithdrTempOld + WithdrTempNew) / 2.0;
 
         read_daily_met(jday, &MetNew);

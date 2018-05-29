@@ -96,6 +96,8 @@ void end_model(void);
 void do_model(int jstart, int nsave);
 void do_model_non_avg(int jstart, int nsave);
 int do_subdaily_loop(int stepnum, int jday, int nsave, AED_REAL SWold, AED_REAL SWnew);
+void end_model(void);
+AED_REAL check_if_nan(AED_REAL new, AED_REAL old);
 
 //int n_steps_done = 0;
 //#define END_STEPS 30
@@ -113,10 +115,13 @@ void run_model()
 
     begn = time(NULL);
     printf("Wall clock start time :  %s", ctime_r(&begn, buf));
-    if (non_avg)
+    if (non_avg){
+        printf("Running NON AVERAGED model (%d) \n", non_avg);
         do_model_non_avg(jstart, nsave);
-    else
+    }else{
+        printf("Running AVERAGED model (%d) \n", non_avg);
         do_model(jstart, nsave);
+    }
     done = time(NULL);
     printf("Wall clock finish time : %s", ctime_r(&done, buf));
     ltd = difftime(done, begn);
@@ -278,9 +283,22 @@ void do_model(int jstart, int nsave)
         SurfData.dailyRunoff = 0.;
 
         read_daily_inflow(jday, NumInf, FlowNew, TempNew, SaltNew, WQNew);
+        //printf("old, new, check %f %f %f\n",FlowOld[0], FlowNew[0], check_if_nan(FlowNew[0],FlowOld[0]));
         //# Averaging of flows
         //# To get daily inflow (i.e. m3/day) times by SecsPerDay
+        // for (i = 0; i < NumInf; i++) {
+        //     Inflows[i].FlowRate = (FlowOld[i] + FlowNew[i]) / 2.0 * SecsPerDay;
+        //     Inflows[i].TemInf   = (TempOld[i] + TempNew[i]) / 2.0;
+        //     Inflows[i].SalInf   = (SaltOld[i] + SaltNew[i]) / 2.0;
+        //     for (j = 0; j < Num_WQ_Vars; j++)
+        //         Inflows[i].WQInf[j] = (WQ_INF_(WQOld,i, j) + WQ_INF_(WQNew, i, j)) / 2.0;
+        // }
+
         for (i = 0; i < NumInf; i++) {
+            FlowNew[i] = check_if_nan(FlowNew[i],FlowOld[i]);
+            TempNew[i] = check_if_nan(TempNew[i],TempOld[i]);
+            SaltNew[i] = check_if_nan(SaltNew[i],SaltOld[i]);
+
             Inflows[i].FlowRate = (FlowOld[i] + FlowNew[i]) / 2.0 * SecsPerDay;
             Inflows[i].TemInf   = (TempOld[i] + TempNew[i]) / 2.0;
             Inflows[i].SalInf   = (SaltOld[i] + SaltNew[i]) / 2.0;
@@ -323,10 +341,8 @@ void do_model(int jstart, int nsave)
         //# End of forcing-mixing-diffusion loop
 
         SurfData.dailyInflow = do_inflows(); //# Do inflow for all streams
-
         //# Do withdrawal for all offtakes
         SurfData.dailyOutflow = do_outflows(jday);
-
         //# Take care of any overflow
         SurfData.dailyOverflow = do_overflow(jday);
 
@@ -352,7 +368,7 @@ void do_model(int jstart, int nsave)
             flush_all_plots();
         else
 #endif
-            printf("Running day %8d, %4.2f%% of days complete%c", jday, ntot*100./nDays,  EOLN);
+        printf("step %d: Running day %8d, %4.2f%% of days complete\n", stepnum, jday, ntot*100./nDays);
 
         write_diags(jday, calculate_lake_number());
     }   //# do while (ntot < ndays)
@@ -621,7 +637,6 @@ int do_subdaily_loop(int stepnum, int jday, int nsave, AED_REAL SWold, AED_REAL 
 
     noSecs = timestep;
     coef_wind_drag = CD;
-
     /**************************************************************************
      *  Loop for each second in a day (86400 = #seconds in a day)             *
      **************************************************************************/
@@ -668,6 +683,7 @@ int do_subdaily_loop(int stepnum, int jday, int nsave, AED_REAL SWold, AED_REAL 
              check_layer_stability();
              fix_radiation(Light_Surface);
         }
+
 //printf("n5 = %10.5f %10.5f\n",Lake[surfLayer].LayerVol, Lake[botmLayer].LayerVol);
 //printf("na = %10.5f %10.5f\n",Lake[surfLayer].LayerArea, Lake[botmLayer].LayerArea);
 //printf("nh = %10.5f %10.5f\n",Lake[surfLayer].Height, Lake[botmLayer].Height);
@@ -731,6 +747,11 @@ int do_subdaily_loop(int stepnum, int jday, int nsave, AED_REAL SWold, AED_REAL 
     return stepnum;
 }
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+AED_REAL check_if_nan(AED_REAL new, AED_REAL old)
+{
+    return isnan(new) ? old : new;
+}
 
 
 /******************************************************************************

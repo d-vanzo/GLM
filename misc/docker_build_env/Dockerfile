@@ -5,7 +5,7 @@ MAINTAINER SURF Team "davide.vanzo@eawag.ch"
 RUN apt-get update && \
 	apt-get install -y libnetcdf-dev libgd-dev libx11-dev && \
 	cmake gfortran-8 lsb_release dh-make electric-fence && \
-	doxygen graphviz
+	doxygen graphviz git
 
 # define the default gnu compile suite version
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 100

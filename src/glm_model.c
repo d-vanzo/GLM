@@ -241,7 +241,8 @@ void do_model(int jstart, int nsave)
     AED_REAL SaltNew[MaxInf], TempNew[MaxInf], WQNew[MaxInf * MaxVars];
     AED_REAL SaltOld[MaxInf], TempOld[MaxInf], WQOld[MaxInf * MaxVars];
 
-    int jday, ntot, stepnum;
+    int jday, ntot, stepnum, echo_counter;
+    echo_counter = 0;
 
     int i, j;
 
@@ -372,9 +373,15 @@ void do_model(int jstart, int nsave)
         else
 #endif
 
-//#if DEBUG
-        printf("step %d: Running day %8d, %4.2f%% of days complete\n", stepnum, jday, ntot*100./nDays);
-//#endif
+#if DEBUG
+    fprintf(stderr, "step %d: Running day %8d, %4.2f%% of days complete\n", stepnum, jday, ntot*100./nDays);
+#endif
+
+    if ( ntot*100./nDays > echo_counter){
+        fprintf(stderr, "step %d: Running day %8d, %4.2f%% of days complete\n", stepnum, jday, ntot*100./nDays);
+        echo_counter += 10;
+    }
+
         write_diags(jday, calculate_lake_number());
     }   //# do while (ntot < ndays)
     /*----------########### End of main daily loop ################-----------*/

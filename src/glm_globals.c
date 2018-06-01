@@ -57,6 +57,7 @@ AED_REAL Kw;             //# background light attenuation (m**-1)
 int Num_WQ_Vars;         //# number of water quality variables
 int Num_WQ_Ben;          //# number of benthic water quality variables
 int atm_stab = 0;   // Account for non-neutral atmospheric stability
+CLOGICAL still_air = FALSE;   // Account for still-air condition
 
 //------------------------------------------------------------------------------
 

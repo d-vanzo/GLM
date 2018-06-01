@@ -204,7 +204,7 @@ else
   # OPT_FFLAGS=
 endif
 
-LIBS+=-lnetcdf
+LIBS+=-lnetcdf -lm
 # If variable NETCDFLIB is not empty, use it to
 # set path to the library
 ifneq ($(NETCDFLIB),)
@@ -217,7 +217,7 @@ ifeq ($(PLOTDIR),)
 endif
 
 ifeq ($(WITH_PLOTS),true)
-  LIBS+=-L$(PLOTDIR)/lib -lplot -lgd -lpng -ljpeg -lm
+  LIBS+=-L$(PLOTDIR)/lib -lplot -lgd -lpng -ljpeg
   ifeq ($(WITH_XPLOTS),true)
     ifeq ($(OSTYPE),Darwin)
       LIBS+=-framework Cocoa

@@ -2,9 +2,9 @@ FROM ubuntu:18.04
 MAINTAINER SURF Team "davide.vanzo@eawag.ch"
 
 # get the tools we need
-RUN apt-get update && \
-	apt-get install -y libnetcdf-dev libgd-dev libx11-dev && \
-	cmake gfortran-8 lsb_release dh-make electric-fence && \
+RUN apt-get update && apt-get install -y \
+	libnetcdf-dev libgd-dev libx11-dev \
+	cmake gfortran-8 lsb-release dh-make electric-fence \
 	doxygen graphviz git
 
 # define the default gnu compile suite version

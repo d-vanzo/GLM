@@ -58,6 +58,8 @@ int Num_WQ_Vars;         //# number of water quality variables
 int Num_WQ_Ben;          //# number of benthic water quality variables
 CLOGICAL atm_stab = FALSE;    // Account for non-neutral atmospheric stability
 CLOGICAL still_air = FALSE;   // Account for still-air condition
+int evap_type = 1;   // Method for Latent and Sensible Flux Calculation 
+                              //(1 = GLM, 2 = mod from Adams et al., 1990) 
 
 //------------------------------------------------------------------------------
 
@@ -96,7 +98,7 @@ AED_REAL coef_wind_drag = 0.0013;
 AED_REAL CD = 0.0013;
 AED_REAL CE = 0.0013;
 AED_REAL CH = 0.0013;
-
+AED_REAL AP = 973;
 //------------------------------------------------------------------------------
 
 MetDataType MetData;         //# Meteorological data

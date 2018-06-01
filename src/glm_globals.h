@@ -96,7 +96,8 @@ extern AED_REAL *zone_area;  //* areas for sed_zones
 
 extern CLOGICAL atm_stab;      // Account for non-neutral atmospheric stability
 extern CLOGICAL still_air;      // Account for still-air condition
-
+extern evap_type;   // Method for Latent and Sensible Flux Calculation 
+                              //(1 = GLM, 2 = mod from Adams et al., 1990) 
 /*----------------------------------------------------------------------------*/
 
 extern AED_REAL CrestLevel; //* crest elevation of reservoir
@@ -132,6 +133,7 @@ extern AED_REAL coef_wind_drag;   //* = 0.0013;
 extern AED_REAL CD;   //* = 0.0013;
 extern AED_REAL CE;   //* = 0.0013;
 extern AED_REAL CH;   //* = 0.0013;
+extern AED_REAL AP;   //* = 973;  [mbar] Atmospheric Pressure in milibars
 
 /*----------------------------------------------------------------------------*/
 

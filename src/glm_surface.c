@@ -442,43 +442,52 @@ void do_surface_thermodynamics(int jday, int iclock, int LWModel,
     if (!ice) {
         //#  Evaporative heat flux affects top layer only
         SatVap_surface = saturated_vapour(Lake[surfLayer].Temp);
-        //# Q_latentheat [W/m2] = CE * rho_air * latent heat * psychro const / air_presssure * windspeed * VPD
-        Q_latentheat = -CE * rho_air * Latent_Heat_Evap * (0.622/p_atm) * WindSp * (SatVap_surface - MetData.SatVapDef);
-
-        if (Q_latentheat > 0.0) Q_latentheat = 0.0;
-
-       
-
-        // Conductive Heat Gain only affects top layer.
-        //# Q_sensibleheat [W/m2] = CH * rho_air * specific heat * windspeed * temp diff
-        Q_sensibleheat = -CH * (rho_air * 1005.) * WindSp * (Lake[surfLayer].Temp - MetData.AirTemp);
-
-        // If chosen by user, do atmospheric stability correction routine
-        //fprintf(stderr, "coef_wind_drag = %e Q_l %e Q_s %e\n", coef_wind_drag, Q_latentheat, Q_sensibleheat);
-        if (atm_stab){
-            coef_wind_drag = atmos_stability(&Q_latentheat,
-                &Q_sensibleheat,
-                WindSp,
-                Lake[surfLayer].Temp,
-                MetData.AirTemp,
-                p_atm*100.,
-                SatVap_surface,
-                MetData.SatVapDef);
+        
+        if (evap_type == 1)
+        {
+            //# Q_latentheat [W/m2] = CE * rho_air * latent heat * psychro const / air_presssure * windspeed * VPD
+            Q_latentheat = -CE * rho_air * Latent_Heat_Evap * (0.622/p_atm) * WindSp * (SatVap_surface - MetData.SatVapDef);
+            if (Q_latentheat > 0.0) Q_latentheat = 0.0;
+    
+            // Conductive Heat Gain only affects top layer.
+            //# Q_sensibleheat [W/m2] = CH * rho_air * specific heat * windspeed * temp diff
+            Q_sensibleheat = -CH * (rho_air * 1005.) * WindSp * (Lake[surfLayer].Temp - MetData.AirTemp);
+    
+            // If chosen by user, do atmospheric stability correction routine
+            //fprintf(stderr, "coef_wind_drag = %e Q_l %e Q_s %e\n", coef_wind_drag, Q_latentheat, Q_sensibleheat);
+            if (atm_stab){
+                coef_wind_drag = atmos_stability(&Q_latentheat,
+                    &Q_sensibleheat,
+                    WindSp,
+                    Lake[surfLayer].Temp,
+                    MetData.AirTemp,
+                    p_atm*100.,
+                    SatVap_surface,
+                    MetData.SatVapDef);
+            }
+                
+            if (still_air)
+            {
+                still_air_correction(&Q_latentheat,
+                    &Q_sensibleheat,
+                    WindSp,
+                    Lake[surfLayer].Temp,
+                    MetData.AirTemp,
+                    p_atm*100.,
+                    SatVap_surface,
+                    MetData.SatVapDef);
+            }
+        }else if (evap_type == 2) {
+            calc_latent_sensible_flux(&Q_latentheat,
+                    &Q_sensibleheat,
+                    WindSp,
+                    Lake[surfLayer].Temp,
+                    MetData.AirTemp,
+                    AP,
+                    SatVap_surface,
+                    MetData.SatVapDef);
         }
         
-        if (still_air)
-        {
-            still_air_correction(&Q_latentheat,
-                &Q_sensibleheat,
-                WindSp,
-                Lake[surfLayer].Temp,
-                MetData.AirTemp,
-                p_atm*100.,
-                SatVap_surface,
-                MetData.SatVapDef);
-        }
-
-
         //fprintf(stderr, " and now = %e Q_l %e Q_s %e\n", coef_wind_drag, Q_latentheat, Q_sensibleheat);
 
         // Evaporative flux in m/s
@@ -1398,6 +1407,49 @@ void  still_air_correction(AED_REAL *Q_latentheat,
         
     //     *Q_latentheat += Q_latentheat_still;
     // }
+}
+
+/******************************************************************************/
+
+void  calc_latent_sensible_flux(AED_REAL *Q_latent,
+                          AED_REAL *Q_sensible,
+                          AED_REAL  WindSp,
+                          AED_REAL  WaterTemp,
+                          AED_REAL  AirTemp,
+                          AED_REAL  p_atm,
+                          AED_REAL  Vap_wat,
+                          AED_REAL  Vap_atm)
+{
+    AED_REAL B0 = 0.61;            // Bowen constant [-]
+
+    // Wind function (Adams et al., 1990), changed by MS, June 2016
+    // Factor 0.6072 to account for changing wind height from 10 to 2 m
+    // Further evaluation of evaporation algorithm may be required. 
+    //fu = sqrt((2.7*max(0.0,(Tws-T_atm)/(1-0.378*Vap_atm/p_air))**0.333)**2 + (0.6072*3.1*wind)**2)
+
+    AED_REAL fu = sqrt( pow(2.7* pow(fmax(0.0,(WaterTemp-AirTemp)/(1.0-0.378*Vap_atm/p_atm)),0.333),2) 
+        + pow(0.6072*3.1*WindSp,2) );
+
+    // ALTERNATIVE FORMULATIONs
+    // Wind function (Livingstone & Imboden 1989)
+    //fu = 4.40+1.82*wind+0.26*(WaterTemp-AirTemp)
+    //fu = 5.44+2.19*wind+0.24*(WaterTemp-AirTemp)
+
+    // Water vapor saturation pressure in air at water temperature (Gill 1992) [millibar]
+    //Vap_wat = 10**((0.7859+0.03477*WaterTemp)/(1+0.00412*WaterTemp))
+    //Vap_wat = Vap_wat*(1+1e-6*p_atm*(4.5+0.00006*WaterTemp**2))
+
+    //like in simstrat it doesn't work...dimensions??
+    //fprintf(stderr, "Vap_wat GLM %f ; temp GLM %f ; ", Vap_wat,WaterTemp);
+    //AED_REAL wtemp = WaterTemp - 273.15;
+    //Vap_wat = pow(10.0, ((0.7859+0.03477*wtemp)/(1.0+0.00412*wtemp)));
+    //Vap_wat *= (1.0+ exp(-6)*p_atm*(4.5+0.00006*wtemp*wtemp));
+    //fprintf(stderr, "Vap_wat MS %f \n", Vap_wat);
+
+    // Flux of sensible heat (convection)
+    *Q_sensible = -B0*fu*(WaterTemp-AirTemp); //[W/m2]
+    // Flux of latent heat (evaporation, condensation)
+    *Q_latent = -fu*(Vap_wat-Vap_atm); //[W/m2] here fu is [W/m2/millibar]
 }
 
 

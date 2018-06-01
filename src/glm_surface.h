@@ -44,6 +44,16 @@ void  still_air_correction(AED_REAL *Q_latentheat,
                           AED_REAL  humidity_surface,
                           AED_REAL  humidity_altitude);
 
+void  calc_latent_sensible_flux(AED_REAL *Q_latent,
+                          AED_REAL *Q_sensible,
+                          AED_REAL  WindSp,
+                          AED_REAL  WaterTemp,
+                          AED_REAL  AirTemp,
+                          AED_REAL  p_atm,
+                          AED_REAL  Vap_wat,
+                          AED_REAL  Vap_atm);
+
+
 AED_REAL atm_density(AED_REAL atmosPressure, AED_REAL vapPressure, AED_REAL AirTemp);
 
 AED_REAL  atmos_stability(AED_REAL *Q_latentheat,

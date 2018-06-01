@@ -42,19 +42,10 @@
 #include "glm_util.h"
 #include "aed_time.h"
 #include "glm_mixu.h"
+#include "glm_surface.h"
 
 //#define dbgprt(...) fprintf(stderr, __VA_ARGS__)
 #define dbgprt(...) /* __VA_ARGS__ */
-
-
-AED_REAL  atmos_stability(AED_REAL *Q_latentheat,
-                          AED_REAL *Q_sensible,
-                          AED_REAL  WindSp,
-                          AED_REAL  WaterTemp,
-                          AED_REAL  AirTemp,
-                          AED_REAL  p_atm,
-                          AED_REAL  humidity_surface,
-                          AED_REAL  humidity_altitude);
 
 /******************************************************************************
  * Variables for the ice cover components                                     *
@@ -84,13 +75,6 @@ static AED_REAL  Q_watermol;   // heat flux through water due to molecular condu
 static AED_REAL  Q_underflow;  // heat flux through water due to flow under the ice
 static AED_REAL  Q_icemet;     // the heat flux at the surface due to meteorological forcing
 //static AED_REAL  U_FLOW;     // the velocity of the underflow
-
-
-
-void recalc_surface_salt(void);
-AED_REAL calculate_qsw(int kDays, int mDays, int iclock,
-                        AED_REAL Latitude, AED_REAL SWOld, AED_REAL ShortWave, AED_REAL WindSp);
-
 
 
 /******************************************************************************
@@ -236,16 +220,20 @@ void do_surface_thermodynamics(int jday, int iclock, int LWModel,
 
     //# Snow conductivity (eqn. 12 Rogers et al. 1995)
     //# To avoid division by zero set to 0.31 when no snow
-    if (SurfData.HeightSnow  ==  0.)
+    if (SurfData.HeightSnow  ==  0.){
         K_snow = 0.31;
-    else
+    }else{
         K_snow = 0.021+(0.0042*rho_snow)+(2.2E-09*pow(rho_snow, 3));
+    }
 
     // Initialize Temp_ice to the Air Temperature
     Temp_ice = MetData.AirTemp;
 
-    if (ice) WindSp = 0.00001;
-    else     WindSp = MetData.WindSpeed;
+    if (ice){
+        WindSp = 0.00001;
+    }else{
+        WindSp = MetData.WindSpeed;
+    }
 
     //# Convert julian days to days since the start of the year
 
@@ -257,14 +245,16 @@ void do_surface_thermodynamics(int jday, int iclock, int LWModel,
     // over the rest of area(surfLayer) units of heat[surfLayer] are
     // joules/sec; units of area(surfLayer) are 10**6 m**2
     for (i = (botmLayer+1); i <= surfLayer; i++)
+    {
         LayerThickness[i] = Lake[i].Height-Lake[i-1].Height;
+    }
+    
     LayerThickness[botmLayer] = Lake[botmLayer].Height;
 
-
-    if (!ice)
+    if (!ice){
         // Assume PAR only (45% of the incident short wave radiation penetrates beyond the surface layer)
         Lake[surfLayer].Light = 0.45 * Q_shortwave;
-    else
+    }else{
         // If there is ice cover the heating due to short wave radiation is attenuated across all three ice layers
         Lake[surfLayer].Light =
              (0.45 * Q_shortwave * ((f_sw_wl1 * exp(-attn_snow_wl1 * SurfData.HeightSnow)) +
@@ -273,6 +263,7 @@ void do_surface_thermodynamics(int jday, int iclock, int LWModel,
                      (f_sw_wl2 * exp(-attn_ice_white_wl2 * SurfData.HeightWhiteIce))) *
                     ((f_sw_wl1 * exp(-attn_ice_blue_wl1  * SurfData.HeightBlackIce)) +
                      (f_sw_wl2 * exp(-attn_ice_blue_wl2  * SurfData.HeightBlackIce)));
+    }
 
     Lake[surfLayer-1].Light = Lake[surfLayer].Light * exp(-Lake[surfLayer].ExtcCoefSW*LayerThickness[surfLayer]);
 
@@ -292,19 +283,21 @@ void do_surface_thermodynamics(int jday, int iclock, int LWModel,
     //        atm_density = (p_atm*100.0)/(287.058 * (MetData.AirTemp+Kelvin));
     rho_air = atm_density(p_atm*100.0,MetData.SatVapDef,MetData.AirTemp);
 
-        if (iclock == 0 && ice) {
+    if (iclock == 0 && ice) {
         AED_REAL BuoyantPotential ;
 
         // Snow cover as well as ice cover
         if (SurfData.HeightSnow > 0.0) {
             if (MetData.Snow > 0.0 && MetData.Rain >= 0.0) {
-//fprintf(stdout, "Snow on snow\n");
+                //fprintf(stdout, "Snow on snow\n");
                 // SNOWFALL ON Snow
                 if (MetData.Rain == 0.0) MetData.Rain = MetData.Snow*0.10; //Use 10:1 snow volume to water equivalent
-                if (MetData.AirTemp > 0.0)
+                
+                if (MetData.AirTemp > 0.0){
                     compact_snow = 0.166+0.834*(1.-exp(-1.*MetData.Rain));
-                else
+                }else{
                     compact_snow = 0.088+0.912*(1.-exp(-1.*MetData.Rain));
+                }
 
                 //Compact snow first
                 rho_snow_old = rho_snow+(snow_rho_max-rho_snow)*compact_snow;
@@ -323,8 +316,11 @@ void do_surface_thermodynamics(int jday, int iclock, int LWModel,
                 Q_Rain = 0.0;
             } else if (MetData.Snow == 0.0 && MetData.Rain == 0.0) {
                 // No snowfall or rainfall, compaction only of snow
-                if (MetData.AirTemp > 0.0) compact_snow = 0.166;
-                else                        compact_snow = 0.088;
+                if (MetData.AirTemp > 0.0){
+                    compact_snow = 0.166;
+                }else{
+                    compact_snow = 0.088;
+                }
 
                 rho_snow_old = rho_snow+(snow_rho_max-rho_snow)*compact_snow;
                 SurfData.HeightSnow = SurfData.HeightSnow*rho_snow/rho_snow_old;
@@ -345,11 +341,12 @@ void do_surface_thermodynamics(int jday, int iclock, int LWModel,
 
                     recalc_surface_salt();
 
-                    if (Temp_ice == Temp_melt)
+                    if (Temp_ice == Temp_melt){
                         Q_Rain = SPHEAT*(MetData.AirTemp-Temp_ice)*(MetData.Rain)/noSecs;
-                    else
+                    }else{
                         Q_Rain = Latent_Heat_Fusion*MetData.Rain/noSecs;
-                } else {
+                    }
+                }else{
                     MetData.Snow = MetData.Rain/snow_rho_max;
                     rho_snow_old = snow_rho_max;
                     SurfData.HeightSnow = SurfData.HeightSnow*rho_snow/rho_snow_old;
@@ -359,23 +356,25 @@ void do_surface_thermodynamics(int jday, int iclock, int LWModel,
                     SurfData.dailyRain += MetData.Rain * Lake[surfLayer].LayerArea;
                 }
             }
-        } else {  // no snow
+        }else{  // no snow
             if (MetData.Snow > 0.0 && MetData.Rain >= 0.0) {
-//fprintf(stdout,"Snow add on ice %f\n", SurfData.HeightSnow);
+                //fprintf(stdout,"Snow add on ice %f\n", SurfData.HeightSnow);
                 // Snowfall on ice
                 if (MetData.Rain == 0.0)MetData.Rain = MetData.Snow*0.10;
+                
                 SurfData.HeightSnow = MetData.Snow;
-
 
                 rho_snow = rho0*MetData.Rain/MetData.Snow;
                 SurfData.dailySnow += MetData.Rain * Lake[surfLayer].LayerArea;
 
-                if (rho_snow > snow_rho_max)rho_snow = snow_rho_max;
-                if (rho_snow < snow_rho_min)rho_snow = snow_rho_min;
+                if (rho_snow > snow_rho_max) rho_snow = snow_rho_max;
+                if (rho_snow < snow_rho_min) rho_snow = snow_rho_min;
                 Q_Rain = 0.0;
+
             } else if (MetData.Snow == 0.0 && MetData.Rain == 0.0) {
                 // No snowfall or rainfall
                 Q_Rain = 0.0;
+
             } else if (MetData.Snow == 0.0 && MetData.Rain > 0.0) {
                 // Rainfall on ice - need to know whether it will contribute to water (T
                 if (MetData.AirTemp > 0.0) {
@@ -417,7 +416,7 @@ void do_surface_thermodynamics(int jday, int iclock, int LWModel,
             //Adjust surface layer height down based on water moving into white ice
             Lake[surfLayer].Height -= dHt_WhiteIce * (rho_ice_white - rho_snow) / Lake[surfLayer].Density;
 
-//fprintf(stdout,"Reduced surface layer thickness by %f to %f\n", dHt_WhiteIce * (rho_ice_white - rho_snow) / Lake[surfLayer].Density, Lake[surfLayer].Height);
+            //fprintf(stdout,"Reduced surface layer thickness by %f to %f\n", dHt_WhiteIce * (rho_ice_white - rho_snow) / Lake[surfLayer].Density, Lake[surfLayer].Height);
             Q_snowice = (Q_whiteice*SurfData.HeightSnow)/(2.0*K_snow);
             SurfData.HeightSnow = BuoyantPotential;
 
@@ -425,7 +424,6 @@ void do_surface_thermodynamics(int jday, int iclock, int LWModel,
             //Missing: Q_whiteice and Q_snowice go unused, probably missing that part of energy budget
             //LCB: Actually used above in heat budget for ice model above only calculated daily
             //      need to make sure Q_whiteice not reset
-
         } else {
             dHt_WhiteIce = 0.0;
             Q_whiteice = 0.0;
@@ -449,29 +447,51 @@ void do_surface_thermodynamics(int jday, int iclock, int LWModel,
 
         if (Q_latentheat > 0.0) Q_latentheat = 0.0;
 
-        // Evaporative flux in m/s
-        if ( no_evap )
-            SurfData.Evap = 0.0;
-        else
-            SurfData.Evap = Q_latentheat / Latent_Heat_Evap / rho0;
+       
 
         // Conductive Heat Gain only affects top layer.
         //# Q_sensibleheat [W/m2] = CH * rho_air * specific heat * windspeed * temp diff
         Q_sensibleheat = -CH * (rho_air * 1005.) * WindSp * (Lake[surfLayer].Temp - MetData.AirTemp);
 
         // If chosen by user, do atmospheric stability correction routine
-//fprintf(stderr, "coef_wind_drag = %e Q_l %e Q_s %e\n", coef_wind_drag, Q_latentheat, Q_sensibleheat);
-        if (atm_stab)
-            coef_wind_drag =
-               atmos_stability(&Q_latentheat,
-                               &Q_sensibleheat,
-                                WindSp,
-                                Lake[surfLayer].Temp,
-                                MetData.AirTemp,
-                                p_atm*100.,
-                                SatVap_surface,
-                                MetData.SatVapDef);
-//fprintf(stderr, " and now = %e Q_l %e Q_s %e\n", coef_wind_drag, Q_latentheat, Q_sensibleheat);
+        //fprintf(stderr, "coef_wind_drag = %e Q_l %e Q_s %e\n", coef_wind_drag, Q_latentheat, Q_sensibleheat);
+        if (atm_stab){
+            coef_wind_drag = atmos_stability(&Q_latentheat,
+                &Q_sensibleheat,
+                WindSp,
+                Lake[surfLayer].Temp,
+                MetData.AirTemp,
+                p_atm*100.,
+                SatVap_surface,
+                MetData.SatVapDef);
+        }
+        
+        if (still_air)
+        {
+            still_air_correction(&Q_latentheat,
+                &Q_sensibleheat,
+                WindSp,
+                Lake[surfLayer].Temp,
+                MetData.AirTemp,
+                p_atm*100.,
+                SatVap_surface,
+                MetData.SatVapDef);
+        }
+
+
+        //fprintf(stderr, " and now = %e Q_l %e Q_s %e\n", coef_wind_drag, Q_latentheat, Q_sensibleheat);
+
+        // Evaporative flux in m/s
+        // if ( no_evap )
+        //     SurfData.Evap = 0.0;
+        // else
+        //     SurfData.Evap = Q_latentheat / Latent_Heat_Evap / rho0;
+        
+        if (no_evap)   // @EC change if
+        {
+            Q_latentheat=0.0;
+        }
+        SurfData.Evap = Q_latentheat / Latent_Heat_Evap / rho0;
 
         // Long Wave emission (ie. longwave out) affects only top layer.
         Q_lw_out = -Stefan_Boltzman * eps_water * pow((Kelvin+Lake[surfLayer].Temp), 4.0);
@@ -511,7 +531,7 @@ void do_surface_thermodynamics(int jday, int iclock, int LWModel,
         } else if (LWModel  ==  LW_NET)
             Q_longwave = MetData.LongWave;
 
-//fprintf(stderr, "%e %e \n%e %e \n%e\n", Q_latentheat, Q_sensibleheat, Q_longwave, Lake[surfLayer].LayerArea);
+        //fprintf(stderr, "%e %e \n%e %e \n%e\n", Q_latentheat, Q_sensibleheat, Q_longwave, Lake[surfLayer].LayerArea);
         heat[surfLayer] = heat[surfLayer]+(Q_latentheat+Q_sensibleheat+Q_longwave)*Lake[surfLayer].LayerArea;
 
         // Daily heat budget (J/day)
@@ -519,6 +539,7 @@ void do_surface_thermodynamics(int jday, int iclock, int LWModel,
         SurfData.dailyQh += Q_sensibleheat * Lake[surfLayer].LayerArea * noSecs;
         SurfData.dailyQlw += Q_longwave * Lake[surfLayer].LayerArea * noSecs;
     } else {
+        // HERE THERE IS ICE
         // The various atmospheric fluxes - evaporative, sensible heat, longwave
         // for ice cover all depend on the ice surface temperature.  Note that wind
         // here is not set to zero (USE MetData.WindSpeed, NOT WindSp].
@@ -726,7 +747,7 @@ void do_surface_thermodynamics(int jday, int iclock, int LWModel,
         Lake[i].Temp += dTemp;
     }
 
-//  if (ice) { printf("Surf Temp post light = %10.5f\n",Lake[surfLayer].Temp);}
+    //  if (ice) { printf("Surf Temp post light = %10.5f\n",Lake[surfLayer].Temp);}
 
     // The change in ice thickness at the bottom can now be determined
     // with the temperature of the lake water readjusted for the surface
@@ -791,7 +812,7 @@ void do_surface_thermodynamics(int jday, int iclock, int LWModel,
         //                         noSecs)+Q_latent_ice)/(SPHEAT*Lake[surfLayer].Density*Lake[surfLayer].LayerVol);
         Lake[surfLayer].Temp = Lake[surfLayer].Temp+((-Q_watermol + Q_latent_ice)*Lake[surfLayer].LayerArea*noSecs)
                                  /(SPHEAT*Lake[surfLayer].Density*Lake[surfLayer].LayerVol);
-//      printf("Surf Temp = %10.5f\n",Lake[surfLayer].Temp);
+        //      printf("Surf Temp = %10.5f\n",Lake[surfLayer].Temp);
         Lake[surfLayer].Height = Lake[surfLayer].Height-SurfData.dHt*(rho_ice_blue/Lake[surfLayer].Density);
 
         recalc_surface_salt();
@@ -1307,6 +1328,77 @@ AED_REAL  atmos_stability(AED_REAL *Q_latentheat,
     return CD4;
 }
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+void  still_air_correction(AED_REAL *Q_latentheat,
+                          AED_REAL *Q_sensible,
+                          AED_REAL  WindSp,
+                          AED_REAL  WaterTemp,
+                          AED_REAL  AirTemp,
+                          AED_REAL  p_atm,
+                          AED_REAL  humidity_surface,
+                          AED_REAL  humidity_altitude)
+{
+    AED_REAL r_o, r_a, rho_a, rho_o, dT, dq, alpha_e;
+    AED_REAL Q_latentheat_still, Q_sensible_still;
+
+    AED_REAL cp_air = 1005.0;  // Specific heat of air
+
+/*----------------------------------------------------------------------------*/
+    // Calculate still air approximations and use this as a minimum
+    // Fluxes to sill air see TVA Section 5.311 and 5.314
+
+    // mixing ratios
+    r_o = humidity_surface/(1-humidity_surface/c_gas);
+    r_a = humidity_altitude/(1-humidity_altitude/c_gas);
+
+    // density
+    // 0.01 is for conversion from pascal to millibars
+    rho_a = 0.348*((1+r_a)/(1+1.61*r_a))*(p_atm*0.01/(AirTemp+Kelvin));  // should use atm_density
+    rho_o = 0.348*((1+r_o)/(1+1.61*r_o))*(p_atm*0.01/(WaterTemp+Kelvin));
+
+    dT = WaterTemp - AirTemp;
+    dq = humidity_surface - humidity_altitude;
+
+    // if (rho_a - rho_o > zero) {
+    //     alpha_e = 0.137*0.5*(gamma_air/cp_air)* pow((9.81*(rho_a-rho_o)/(rho_a*mu_air*k_air)), (1/3.0));
+    //     Q_sensible_still = -alpha_e * dT;
+    //     Q_latentheat_still = -alpha_e * dq * Latent_Heat_Evap;
+    // } else {
+    //     Q_sensible_still = zero;
+    //     Q_latentheat_still = zero;
+    // }
+
+    // version 2
+    alpha_e = 0.137*0.5*(gamma_air/cp_air)* pow((9.81*fabs(rho_a-rho_o)/(rho_a*mu_air*k_air)), (1/3.0));
+    Q_sensible_still = -alpha_e * dT;
+    Q_latentheat_still = -alpha_e * dq * Latent_Heat_Evap;
+    
+    if (Q_latentheat_still > zero) Q_latentheat_still = zero;
+    //-------------
+
+    if (WindSp<0.3) {
+        if (*Q_sensible > zero)
+        {
+            //take the max
+            *Q_sensible = fmax(*Q_sensible , Q_sensible_still);    
+        }else{
+            //take the min
+            *Q_sensible = fmin(*Q_sensible , Q_sensible_still);
+        }
+        
+        *Q_latentheat = fmin(*Q_latentheat , Q_latentheat_still);
+        
+        // choice 3
+        // *Q_sensible = Q_sensible_still;
+        // *Q_latentheat = Q_latentheat_still;
+    }
+    // if (WindSp<0.5) {
+        
+    //     *Q_sensible += Q_sensible_still;
+        
+    //     *Q_latentheat += Q_latentheat_still;
+    // }
+}
 
 
 /******************************************************************************/

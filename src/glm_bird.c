@@ -43,12 +43,13 @@
 #include "glm_const.h"
 #include "glm_util.h"
 #include "glm_bird.h"
+#include "glm_globals.h"
 
 #include <aed_time.h>
 #include <namelist.h>
 
 
-static AED_REAL AP = 973;          //# Atmospheric Pressure in milibars
+//static AED_REAL AP = 973;        //redeclared as global var//# Atmospheric Pressure in milibars
 static AED_REAL Oz = 0.279;        //# Ozone concentration in atm-cm
 static AED_REAL WatVap = 1.1;      //# Total Precipitable water vapor in atm-cm
 static AED_REAL AOD500 = 0.033;    //# Dimensionless Aerosol Optical Depth at wavelength 500 nm

@@ -93,7 +93,8 @@ extern AED_REAL *zone_heights; //# heights for sed_zones
 extern AED_REAL *zone_area;    //# areas for sed_zones
 
 extern CLOGICAL still_air;      // Account for still-air condition
-
+extern int evap_type;   // Method for Latent and Sensible Flux Calculation 
+                              //(1 = GLM, 2 = mod from Adams et al., 1990) 
 /*----------------------------------------------------------------------------*/
 
 extern AED_REAL MaxHeight;   //# maxmimum height of reservoir
@@ -134,6 +135,12 @@ extern AED_REAL outflow_thick_limit;
 //
 extern int NumDif;
 extern AED_REAL mol_diffusivity[];
+
+//extern AED_REAL coef_wind_drag;   //* = 0.0013;
+//extern AED_REAL CD;   //* = 0.0013;
+//extern AED_REAL CE;   //* = 0.0013;
+//extern AED_REAL CH;   //* = 0.0013;
+extern AED_REAL AP;   //* = 973;  [mbar] Atmospheric Pressure in milibars
 
 /*----------------------------------------------------------------------------*/
 // SURFACE

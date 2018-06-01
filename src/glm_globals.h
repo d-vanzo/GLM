@@ -95,6 +95,7 @@ extern AED_REAL *zone_area;  //* areas for sed_zones
 
 
 extern CLOGICAL atm_stab;      // Account for non-neutral atmospheric stability
+extern CLOGICAL still_air;      // Account for still-air condition
 
 /*----------------------------------------------------------------------------*/
 

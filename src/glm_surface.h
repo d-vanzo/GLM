@@ -33,4 +33,30 @@
 void do_surface_thermodynamics(int jday, int iclock, int lwInd,
                                   AED_REAL Latitude, AED_REAL SWOld, AED_REAL SWNew);
 
+//void recalc_surface_salt(void);
+
+void  still_air_correction(AED_REAL *Q_latentheat,
+                          AED_REAL *Q_sensible,
+                          AED_REAL  WindSp,
+                          AED_REAL  WaterTemp,
+                          AED_REAL  AirTemp,
+                          AED_REAL  p_atm,
+                          AED_REAL  humidity_surface,
+                          AED_REAL  humidity_altitude);
+
+AED_REAL atm_density(AED_REAL atmosPressure, AED_REAL vapPressure, AED_REAL AirTemp);
+
+// AED_REAL  atmos_stability(AED_REAL *Q_latentheat,
+//                           AED_REAL *Q_sensible,
+//                           AED_REAL  WindSp,
+//                           AED_REAL  WaterTemp,
+//                           AED_REAL  AirTemp,
+//                           AED_REAL  p_atm,
+//                           AED_REAL  humidity_surface,
+//                           AED_REAL  humidity_altitude);
+
+//AED_REAL calculate_qsw(int kDays, int mDays, int iclock,
+//                        AED_REAL Latitude, AED_REAL SWOld, AED_REAL ShortWave, AED_REAL WindSp);
+
+
 #endif

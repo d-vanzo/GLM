@@ -88,23 +88,11 @@ extern int Num_WQ_Vars;        //# number of water quality variables
 extern int Num_WQ_Ben;         //# number of benthic water quality variables
 extern AED_REAL *WQ_Vars;      //# water quality array : nlayers, nvars
 
-<<<<<<< 5a49e47fa6674ebf5abeea4d798005687194b9c4
 extern int       n_zones;      //# number of sediment zones
 extern AED_REAL *zone_heights; //# heights for sed_zones
 extern AED_REAL *zone_area;    //# areas for sed_zones
-=======
-extern int Num_WQ_Vars;      //* number of water quality variables
-extern int Num_WQ_Ben;       //* number of benthic water quality variables
-extern AED_REAL *WQ_Vars;    //* water quality array : nlayers, nvars
 
-extern int       n_zones;    //* number of sediment zones
-extern AED_REAL *zone_heights;   //* heights for sed_zones
-extern AED_REAL *zone_area;  //* areas for sed_zones
-
-
-extern CLOGICAL atm_stab;      // Account for non-neutral atmospheric stability
 extern CLOGICAL still_air;      // Account for still-air condition
->>>>>>> add flag for still_air; minor improvements in main loop
 
 /*----------------------------------------------------------------------------*/
 

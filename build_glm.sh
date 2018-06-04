@@ -4,6 +4,20 @@ if [ "$GLM_CONFIGURED" != "true" ] ; then
   . ./GLM_CONFIG
 fi
 
+while [ $# -gt 0 ] ; do
+  case $1 in
+    --debug)
+      export DEBUG=true
+      ;;
+    --fence)
+      export FENCE=true
+      ;;
+    *)
+      ;;
+  esac
+  shift
+done
+
 export OSTYPE=`uname -s`
 
 if [ "$FORTRAN_COMPILER" = "IFORT" ] ; then
@@ -79,7 +93,8 @@ if [ "$FABM" = "true" ] ; then
     mkdir build
   fi
   cd build
-  export EXTRA_FFLAGS+=-fPIC
+# export EXTRA_FFLAGS+=-fPIC
+  export FFLAGS+=-fPIC
   if [ "${USE_DL}" = "true" ] ; then
     cmake ${FABMDIR}/src -DBUILD_SHARED_LIBS=1 || exit 1
   else
@@ -91,6 +106,14 @@ fi
 if [ "${AED2}" = "true" ] ; then
   cd ${AED2DIR}
   make || exit 1
+  cd ..
+  if [ "${AED2PLS}" != "" ] ; then
+    if [ -d ${AED2PLS} ] ; then
+      cd ${AED2PLS}
+      make || exit 1
+      cd ..
+    fi
+  fi
 fi
 
 if [ "$WITH_PLOTS" = "true" ] ; then
@@ -105,6 +128,9 @@ if [ -f ${CURDIR}/src/glm ] ; then
   /bin/rm ${CURDIR}/src/glm
 fi
 cd ${CURDIR}
-make || exit 1
+make || exit
+if [ -d ${AED2PLS} ] ; then
+  make glm+ || exit 1
+fi
 
 exit 0

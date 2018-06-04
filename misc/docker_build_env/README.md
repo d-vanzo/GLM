@@ -19,7 +19,7 @@ Note that the last repository is a fork of the official GLM project.
 4. Build the docker image using the given Dockerfile
 
     ~~~bash
-    docker docker build -t glm:ubuntu18 .
+    docker build -t glm:ubuntu18 .
     ~~~
 
 5. Create the actual docker container (that makes use of the image you just created), remebering to provide the `<pathToLocalGitRepoDirectory>`:

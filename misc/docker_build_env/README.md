@@ -3,10 +3,10 @@
 Prepare your working copy of GLM source files and its dependancies (e.g. a root folder named `AED_Tools`. For a minimal installation of GLM (no plots), you need to clone the following repositories:
 
 ~~~bash
-git clone git@github.com:AquaticEcoDynamics/libaed2.git
-git clone git@github.com:AquaticEcoDynamics/libutil.git
+git clone https://github.com/AquaticEcoDynamics/libaed2.git
+git clone https://github.com/AquaticEcoDynamics/libutil.git
 git clone git://git.code.sf.net/p/fabm/code fabm-git
-git clone git@github.com:d-vanzo/GLM.git
+git clone https://github.com/d-vanzo/GLM.git
 ~~~
 
 Note that the last repository is a fork of the official GLM project.

@@ -487,20 +487,15 @@ void do_surface_thermodynamics(int jday, int iclock, int LWModel,
                     SatVap_surface,
                     MetData.SatVapDef);
         }
-        
+
         //fprintf(stderr, " and now = %e Q_l %e Q_s %e\n", coef_wind_drag, Q_latentheat, Q_sensibleheat);
 
         // Evaporative flux in m/s
-        // if ( no_evap )
-        //     SurfData.Evap = 0.0;
-        // else
-        //     SurfData.Evap = Q_latentheat / Latent_Heat_Evap / rho0;
-        
-        if (no_evap)   // @EC change if
-        {
-            Q_latentheat=0.0;
+        if ( no_evap ){
+            SurfData.Evap = 0.0;
+        }else{
+            SurfData.Evap = Q_latentheat / Latent_Heat_Evap / rho0;
         }
-        SurfData.Evap = Q_latentheat / Latent_Heat_Evap / rho0;
 
         // Long Wave emission (ie. longwave out) affects only top layer.
         Q_lw_out = -Stefan_Boltzman * eps_water * pow((Kelvin+Lake[surfLayer].Temp), 4.0);

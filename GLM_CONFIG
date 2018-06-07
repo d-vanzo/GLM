@@ -9,7 +9,7 @@ export WITH_PLOTS=true
 export WITH_XPLOTS=true
 
 # export FC=ifort
-# export FC=gfortran
+export FC=gfortran
 
 # The default is MacPorts : uncomment the next line if you use "homebrew"
 #export HOMEBREW=true

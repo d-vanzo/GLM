@@ -1700,76 +1700,78 @@ int atmos_stability(      AED_REAL *Q_latentheat,
 }
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
-void  still_air_correction(AED_REAL *Q_latentheat,
-                          AED_REAL *Q_sensible,
-                          AED_REAL  WindSp,
-                          AED_REAL  WaterTemp,
-                          AED_REAL  AirTemp,
-                          AED_REAL  p_atm,
-                          AED_REAL  humidity_surface,
-                          AED_REAL  humidity_altitude)
-{
-    AED_REAL r_o, r_a, rho_a, rho_o, dT, dq, alpha_e;
-    AED_REAL Q_latentheat_still, Q_sensible_still;
+// void  still_air_correction(AED_REAL *Q_latentheat,
+//                           AED_REAL *Q_sensible,
+//                           AED_REAL  WindSp,
+//                           AED_REAL  WaterTemp,
+//                           AED_REAL  AirTemp,
+//                           AED_REAL  p_atm,
+//                           AED_REAL  humidity_surface,
+//                           AED_REAL  humidity_altitude)
+// {
+//     AED_REAL r_o, r_a, rho_a, rho_o, dT, dq, alpha_e;
+//     AED_REAL Q_latentheat_still, Q_sensible_still;
 
-    AED_REAL cp_air = 1005.0;  // Specific heat of air
+//     AED_REAL cp_air = 1005.0;  // Specific heat of air
 
-/*----------------------------------------------------------------------------*/
-    // Calculate still air approximations and use this as a minimum
-    // Fluxes to sill air see TVA Section 5.311 and 5.314
+// /*----------------------------------------------------------------------------*/
+//     // Calculate still air approximations and use this as a minimum
+//     // Fluxes to sill air see TVA Section 5.311 and 5.314
 
-    // mixing ratios
-    r_o = humidity_surface/(1-humidity_surface/c_gas);
-    r_a = humidity_altitude/(1-humidity_altitude/c_gas);
+//     // mixing ratios
+//     r_o = humidity_surface/(1-humidity_surface/c_gas);
+//     r_a = humidity_altitude/(1-humidity_altitude/c_gas);
 
-    // density
-    // 0.01 is for conversion from pascal to millibars
-    rho_a = 0.348*((1+r_a)/(1+1.61*r_a))*(p_atm*0.01/(AirTemp+Kelvin));  // should use atm_density
-    rho_o = 0.348*((1+r_o)/(1+1.61*r_o))*(p_atm*0.01/(WaterTemp+Kelvin));
+//     // density
+//     // 0.01 is for conversion from pascal to millibars
+//     rho_a = 0.348*((1+r_a)/(1+1.61*r_a))*(p_atm*0.01/(AirTemp+Kelvin));  // should use atm_density
+//     rho_o = 0.348*((1+r_o)/(1+1.61*r_o))*(p_atm*0.01/(WaterTemp+Kelvin));
 
-    dT = WaterTemp - AirTemp;
-    dq = humidity_surface - humidity_altitude;
+//     dT = WaterTemp - AirTemp;
+//     dq = humidity_surface - humidity_altitude;
 
-    // if (rho_a - rho_o > zero) {
-    //     alpha_e = 0.137*0.5*(gamma_air/cp_air)* pow((9.81*(rho_a-rho_o)/(rho_a*mu_air*k_air)), (1/3.0));
-    //     Q_sensible_still = -alpha_e * dT;
-    //     Q_latentheat_still = -alpha_e * dq * Latent_Heat_Evap;
-    // } else {
-    //     Q_sensible_still = zero;
-    //     Q_latentheat_still = zero;
-    // }
+//     // if (rho_a - rho_o > zero) {
+//     //     alpha_e = 0.137*0.5*(gamma_air/cp_air)* pow((9.81*(rho_a-rho_o)/(rho_a*mu_air*k_air)), (1/3.0));
+//     //     Q_sensible_still = -alpha_e * dT;
+//     //     Q_latentheat_still = -alpha_e * dq * Latent_Heat_Evap;
+//     // } else {
+//     //     Q_sensible_still = zero;
+//     //     Q_latentheat_still = zero;
+//     // }
 
-    // version 2
-    alpha_e = 0.137*0.5*(gamma_air/cp_air)* pow((9.81*fabs(rho_a-rho_o)/(rho_a*mu_air*k_air)), (1/3.0));
-    Q_sensible_still = -alpha_e * dT;
-    Q_latentheat_still = -alpha_e * dq * Latent_Heat_Evap;
+//     // version 2
+//     alpha_e = 0.137*0.5*K_air* pow((g*fabs(rho_air-rho_o)/(rho_air*visc_k_air*D_air)), (1/3.0));
 
-    if (Q_latentheat_still > zero) Q_latentheat_still = zero;
-    //-------------
+//     //OLD alpha_e = 0.137*0.5*(gamma_air/cp_air)* pow((9.81*fabs(rho_a-rho_o)/(rho_a*mu_air*k_air)), (1/3.0));
+//     Q_sensible_still = -alpha_e * dT;
+//     Q_latentheat_still = -alpha_e * dq * Latent_Heat_Evap;
 
-    if (WindSp<0.3) {
-        if (*Q_sensible > zero)
-        {
-            //take the max
-            *Q_sensible = fmax(*Q_sensible , Q_sensible_still);
-        }else{
-            //take the min
-            *Q_sensible = fmin(*Q_sensible , Q_sensible_still);
-        }
+//     if (Q_latentheat_still > zero) Q_latentheat_still = zero;
+//     //-------------
 
-        *Q_latentheat = fmin(*Q_latentheat , Q_latentheat_still);
+//     if (WindSp<0.3) {
+//         if (*Q_sensible > zero)
+//         {
+//             //take the max
+//             *Q_sensible = fmax(*Q_sensible , Q_sensible_still);
+//         }else{
+//             //take the min
+//             *Q_sensible = fmin(*Q_sensible , Q_sensible_still);
+//         }
 
-        // choice 3
-        // *Q_sensible = Q_sensible_still;
-        // *Q_latentheat = Q_latentheat_still;
-    }
-    // if (WindSp<0.5) {
+//         *Q_latentheat = fmin(*Q_latentheat , Q_latentheat_still);
 
-    //     *Q_sensible += Q_sensible_still;
+//         // choice 3
+//         // *Q_sensible = Q_sensible_still;
+//         // *Q_latentheat = Q_latentheat_still;
+//     }
+//     // if (WindSp<0.5) {
 
-    //     *Q_latentheat += Q_latentheat_still;
-    // }
-}
+//     //     *Q_sensible += Q_sensible_still;
+
+//     //     *Q_latentheat += Q_latentheat_still;
+//     // }
+// }
 
 
 /******************************************************************************/

@@ -624,6 +624,7 @@ void init_glm(int *jstart, char *outp_dir, char *outp_fn, int *nsave)
         fprintf(stderr,"Error reading 'meteorology' from namelist file %s\n", glm_nml_file);
         exit(1);
     }
+    //fprintf(stderr, " EVAPORATION TYPE %d\n", evap_type);
 
     if ( lw_type == NULL )
         lw_ind = LW_CC;

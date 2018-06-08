@@ -50,7 +50,7 @@ AED_REAL DMax;    //# maximum layer thickness
 AED_REAL VMin;    //# minimum layer volume
 AED_REAL VMax;    //# maximum layer volume
 
-int wq_calc = FALSE;
+int wq_calc = TRUE;
 
 AED_REAL Kw;             //# background light attenuation (m**-1)
 

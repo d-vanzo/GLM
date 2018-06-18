@@ -13,7 +13,7 @@ Note that the last repository is a fork of the official GLM project.
 
 ### Setup a Docker container
 1. Install the [_docker_](https://www.docker.com/
-) engine (community edition), as explained [here](https://docs.docker.com/install/).
+) engine (community edition), as explained [here](https://docs.docker.com/install/) or for [MacOS](https://docs.docker.com/docker-for-mac/install/) or for [Ubuntu](https://docs.docker.com/install/linux/docker-ce/ubuntu/).
 2. I prepare a ready-to-use *Dockerfile* with all the needed packages, so open the terminal inside the folder `GLM/misc/docker_build_env/` where the Dockerfile is located.
 3. WATCH! For Linux and (maybe) MacOS users: by default _docker engine_ requires root privileges, i.e. you have to type `sudo` in front of each of the following commands. If you wish to avoid this, you can follow this [guidelines](https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user).
 4. Build the docker image using the given Dockerfile
